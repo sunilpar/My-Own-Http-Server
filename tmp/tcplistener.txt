@@ -1,0 +1,6 @@
+Listening for TCP traffic on :42069
+Accepted connection from [::1]:58030
+r.method:GET
+r.requestTarget:/prime/agen
+r.httpversion:1.1
+Connection to  [::1]:58030 closed
