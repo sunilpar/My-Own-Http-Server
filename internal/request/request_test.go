@@ -2,7 +2,6 @@ package request
 
 import (
 	"io"
-	// "strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,41 +18,113 @@ func (cr *chunkReader) Read(p []byte) (n int, err error) {
 	if cr.pos >= len(cr.data) {
 		return 0, io.EOF
 	}
-	endIndex := cr.pos + cr.numBytesPerRead
-	if endIndex > len(cr.data) {
-		endIndex = len(cr.data)
+	end := cr.pos + cr.numBytesPerRead
+	if end > len(cr.data) {
+		end = len(cr.data)
 	}
-	n = copy(p, cr.data[cr.pos:endIndex])
+	n = copy(p, cr.data[cr.pos:end])
 	cr.pos += n
-	if n > cr.numBytesPerRead {
-		n = cr.numBytesPerRead
-		cr.pos -= n - cr.numBytesPerRead
-	}
 	return n, nil
 }
 
 func TestHeaderFromReader(t *testing.T) {
-	// Test: Standard Headers
+	// ✅ Valid GET request with headers
 	reader := &chunkReader{
 		data:            "GET / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n",
 		numBytesPerRead: 3,
 	}
-	r, err := RequestFromReader(reader)
+	req, err := RequestFromReader(reader)
 	require.NoError(t, err)
-	require.NotNil(t, r)
-	assert.Equal(t, "localhost:42069", r.Headers["host"])
-	assert.Equal(t, "curl/7.81.0", r.Headers["user-agent"])
-	assert.Equal(t, "*/*", r.Headers["accept"])
+	require.NotNil(t, req)
 
-	// Test: Malformed Header
+	assert.Equal(t, "GET", req.RequestLine.Method)
+	assert.Equal(t, "/", req.RequestLine.RequestTarget)
+	assert.Equal(t, "1.1", req.RequestLine.HttpVersion)
+
+	assert.Equal(t, "localhost:42069", req.Headers["host"])
+	assert.Equal(t, "curl/7.81.0", req.Headers["user-agent"])
+	assert.Equal(t, "*/*", req.Headers["accept"])
+
+	// ❌ Malformed header (missing colon)
 	reader = &chunkReader{
 		data:            "GET / HTTP/1.1\r\nHost localhost:42069\r\n\r\n",
 		numBytesPerRead: 3,
 	}
-	r, err = RequestFromReader(reader)
+	req, err = RequestFromReader(reader)
 	require.Error(t, err)
+	require.Nil(t, req)
+
+	// ✅ Valid POST request with multiple reads
+	reader = &chunkReader{
+		data:            "POST /submit HTTP/1.1\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n",
+		numBytesPerRead: 5,
+	}
+	req, err = RequestFromReader(reader)
+	require.NoError(t, err)
+	require.NotNil(t, req)
+
+	assert.Equal(t, "POST", req.RequestLine.Method)
+	assert.Equal(t, "/submit", req.RequestLine.RequestTarget)
+	assert.Equal(t, "text/plain", req.Headers["content-type"])
+	assert.Equal(t, "0", req.Headers["content-length"])
 }
 
+// package request
+//
+// import (
+// 	"io"
+// 	// "strings"
+// 	"testing"
+//
+// 	"github.com/stretchr/testify/assert"
+// 	"github.com/stretchr/testify/require"
+// )
+//
+// type chunkReader struct {
+// 	data            string
+// 	numBytesPerRead int
+// 	pos             int
+// }
+//
+// func (cr *chunkReader) Read(p []byte) (n int, err error) {
+// 	if cr.pos >= len(cr.data) {
+// 		return 0, io.EOF
+// 	}
+// 	endIndex := cr.pos + cr.numBytesPerRead
+// 	if endIndex > len(cr.data) {
+// 		endIndex = len(cr.data)
+// 	}
+// 	n = copy(p, cr.data[cr.pos:endIndex])
+// 	cr.pos += n
+// 	if n > cr.numBytesPerRead {
+// 		n = cr.numBytesPerRead
+// 		cr.pos -= n - cr.numBytesPerRead
+// 	}
+// 	return n, nil
+// }
+//
+// func TestHeaderFromReader(t *testing.T) {
+// 	// Test: Standard Headers
+// 	reader := &chunkReader{
+// 		data:            "GET / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n",
+// 		numBytesPerRead: 3,
+// 	}
+// 	r, err := RequestFromReader(reader)
+// 	require.NoError(t, err)
+// 	require.NotNil(t, r)
+// 	assert.Equal(t, "localhost:42069", r.Headers["host"])
+// 	assert.Equal(t, "curl/7.81.0", r.Headers["user-agent"])
+// 	assert.Equal(t, "*/*", r.Headers["accept"])
+//
+// 	// Test: Malformed Header
+// 	reader = &chunkReader{
+// 		data:            "GET / HTTP/1.1\r\nHost localhost:42069\r\n\r\n",
+// 		numBytesPerRead: 3,
+// 	}
+// 	r, err = RequestFromReader(reader)
+// 	require.Error(t, err)
+// }
+//
 // func TestRequestFromReader(t *testing.T) {
 // 	// Test: Good GET Request line
 // 	reader := &chunkReader{
@@ -110,5 +181,5 @@ func TestHeaderFromReader(t *testing.T) {
 // 	// _, err = RequestFromReader(strings.NewReader("/coffee HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 // 	// require.Error(t, err)
 // }
-
+//
 //!go test ./internal/request -v
