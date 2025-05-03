@@ -18,6 +18,7 @@ func isValidTokenChar(r rune) bool {
 
 func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	s := string(data)
+	fmt.Printf("buff\t%v\n", s)
 	crlfIndex := strings.Index(s, "\r\n")
 	if crlfIndex == -1 {
 		return 0, false, nil

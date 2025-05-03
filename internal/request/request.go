@@ -2,6 +2,7 @@ package request
 
 import (
 	"fmt"
+	"httpfromtcp/internal/headers"
 	"io"
 	"strings"
 	"unicode"
@@ -11,18 +12,15 @@ type parserState int
 
 const (
 	stateInitialized parserState = iota
-	reqDone
-	headerDone
+	stateParsingHeaders
 	stateDone
 )
 
 type Request struct {
 	RequestLine RequestLine
+	Headers     headers.Headers
 	state       parserState
-	Headers     Headers
 }
-
-type Headers map[string]string
 
 type RequestLine struct {
 	HttpVersion   string
@@ -33,21 +31,20 @@ type RequestLine struct {
 func RequestFromReader(reader io.Reader) (*Request, error) {
 	buf := make([]byte, 8)
 	readTo := 0
-	req := &Request{state: stateInitialized}
-
+	req := &Request{
+		state:   stateInitialized,
+		Headers: headers.NewHeaders(),
+	}
 	for {
 		if readTo == len(buf) {
 			newBuf := make([]byte, len(buf)*2)
 			copy(newBuf, buf)
 			buf = newBuf
 		}
-		//here buf is updated with the data from reader.reader
 		n, err := reader.Read(buf[readTo:])
 		if err != nil && err != io.EOF {
 			return nil, err
 		}
-		// s := string(buf)
-		// fmt.Printf("buff\t%v\n", s)
 		readTo += n
 
 		parsed, perr := req.parse(buf[:readTo])
@@ -71,7 +68,7 @@ func parseRequestLine(data []byte) (RequestLine, int, error) {
 	s := string(data)
 	i := strings.Index(s, "\r\n")
 	if i == -1 {
-		return RequestLine{}, 0, nil // Need more data
+		return RequestLine{}, 0, nil
 	}
 	line := s[:i]
 	parts := strings.Split(line, " ")
@@ -97,24 +94,45 @@ func parseRequestLine(data []byte) (RequestLine, int, error) {
 		Method:        method,
 		RequestTarget: target,
 		HttpVersion:   "1.1",
-	}, i + 2, nil // Include \r\n
+	}, i + 2, nil
 }
 
 func (r *Request) parse(data []byte) (int, error) {
+	totalParsed := 0
+	for r.state != stateDone {
+		n, err := r.parseSingle(data[totalParsed:])
+		if err != nil {
+			return totalParsed, err
+		}
+		if n == 0 {
+			break
+		}
+		totalParsed += n
+	}
+	return totalParsed, nil
+}
+
+func (r *Request) parseSingle(data []byte) (int, error) {
 	switch r.state {
 	case stateInitialized:
 		rl, n, err := parseRequestLine(data)
+		if err != nil || n == 0 {
+			return n, err
+		}
+		r.RequestLine = rl
+		r.state = stateParsingHeaders
+		return n, nil
+
+	case stateParsingHeaders:
+		n, done, err := r.Headers.Parse(data)
 		if err != nil {
 			return 0, err
 		}
-		if n == 0 {
-			return 0, nil // need more data
+		if done {
+			r.state = stateDone
 		}
-		r.RequestLine = rl
-		r.state = stateDone
 		return n, nil
-	case stateDone:
-		return 0, fmt.Errorf("already parsed")
+
 	default:
 		return 0, fmt.Errorf("unknown state")
 	}
