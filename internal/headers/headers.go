@@ -54,4 +54,4 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	return crlfIndex + 2, false, nil
 }
 
-//go test -v ./internal/headers -v
+//go test -v ./internal/headers

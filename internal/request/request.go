@@ -11,13 +11,18 @@ type parserState int
 
 const (
 	stateInitialized parserState = iota
+	reqDone
+	headerDone
 	stateDone
 )
 
 type Request struct {
 	RequestLine RequestLine
 	state       parserState
+	Headers     Headers
 }
+
+type Headers map[string]string
 
 type RequestLine struct {
 	HttpVersion   string
