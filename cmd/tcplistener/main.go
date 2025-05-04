@@ -31,12 +31,15 @@ func main() {
 		if err != nil {
 			log.Fatalf("error: %s\n", err.Error())
 		}
-
-		fmt.Printf("r.method:%v\n", rn.RequestLine.Method)
-		fmt.Printf("r.requestTarget:%v\n", rn.RequestLine.RequestTarget)
-		fmt.Printf("r.httpversion:%v\n", rn.RequestLine.HttpVersion)
-
-		fmt.Println("Connection to ", conn.RemoteAddr(), "closed")
+		fmt.Printf("\nrequest line:\n")
+		fmt.Printf("method:%v\n", rn.RequestLine.Method)
+		fmt.Printf("requestTarget:%v\n", rn.RequestLine.RequestTarget)
+		fmt.Printf("httpversion:%v\n", rn.RequestLine.HttpVersion)
+		fmt.Printf("\nheaders:\n")
+		for i, v := range rn.Headers {
+			fmt.Printf("[%v]:%v\n", i, v)
+		}
+		fmt.Println("\nConnection to ", conn.RemoteAddr(), "closed")
 	}
 }
 

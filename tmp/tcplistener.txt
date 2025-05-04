@@ -1,6 +1,14 @@
 Listening for TCP traffic on :42069
-Accepted connection from [::1]:58030
-r.method:GET
-r.requestTarget:/prime/agen
-r.httpversion:1.1
-Connection to  [::1]:58030 closed
+Accepted connection from [::1]:33772
+
+request line:
+method:GET
+requestTarget:/use-neovim-btw
+httpversion:1.1
+
+headers:
+[user-agent]:curl/8.5.0
+[accept]:*/*
+[host]:localhost:42069
+
+Connection to  [::1]:33772 closed

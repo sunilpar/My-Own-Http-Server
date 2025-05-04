@@ -122,7 +122,6 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 		r.RequestLine = rl
 		r.state = stateParsingHeaders
 		return n, nil
-
 	case stateParsingHeaders:
 		n, done, err := r.Headers.Parse(data)
 		if err != nil {
@@ -132,7 +131,6 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 			r.state = stateDone
 		}
 		return n, nil
-
 	default:
 		return 0, fmt.Errorf("unknown state")
 	}
