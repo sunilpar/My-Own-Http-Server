@@ -53,5 +53,14 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 
 	return crlfIndex + 2, false, nil
 }
+func (h Headers) Get(key string) string {
+	key = strings.ToLower(key)
+	for k, v := range h {
+		if strings.ToLower(k) == key {
+			return v
+		}
+	}
+	return ""
+}
 
 //go test -v ./internal/headers
