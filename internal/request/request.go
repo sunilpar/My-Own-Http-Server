@@ -13,12 +13,14 @@ type parserState int
 const (
 	stateInitialized parserState = iota
 	stateParsingHeaders
+	stateParsingBody
 	stateDone
 )
 
 type Request struct {
 	RequestLine RequestLine
 	Headers     headers.Headers
+	Body        []byte
 	state       parserState
 }
 
@@ -128,9 +130,11 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 			return 0, err
 		}
 		if done {
-			r.state = stateDone
+			r.state = stateParsingBody
 		}
 		return n, nil
+	case stateParsingBody:
+		return 0, nil
 	default:
 		return 0, fmt.Errorf("unknown state")
 	}
