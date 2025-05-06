@@ -117,6 +117,7 @@ func (r *Request) parse(data []byte, eof bool) (int, error) {
 	totalParsed := 0
 	for r.state != stateDone {
 		n, err := r.parseSingle(data[totalParsed:], eof)
+		fmt.Printf("buff:%v eof:%v\n", string(data[totalParsed:]), eof)
 		if err != nil {
 			return totalParsed, err
 		}
@@ -170,11 +171,9 @@ func (r *Request) parseSingle(data []byte, eof bool) (int, error) {
 				return 0, fmt.Errorf("body larger than Content-Length")
 			}
 			if len(r.Body) == r.bodyLength {
-				fmt.Printf("-------eof-------\n")
 				r.state = stateDone
 			}
 		} else if eof {
-			fmt.Printf("!!!!-eof-!!!!!\n")
 			r.state = stateDone
 		}
 		return len(data), nil
