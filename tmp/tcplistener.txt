@@ -1,0 +1,29 @@
+
+--request line--
+method: POST
+requestTarget: /coffee
+httpversion: 1.1
+
+--headers--
+[host]: localhost:42069
+[user-agent]: curl/8.5.0
+[accept]: */*
+[content-type]: application/json
+[content-length]: 39
+
+--Body--
+r.body: {"type": "dark mode", "size": "medium"}
+
+--request line--
+method: GET
+requestTarget: /
+httpversion: 1.1
+
+--headers--
+[host]: localhost
+[user-agent]: curl/8.5.0
+[accept]: */*
+[connection]: close
+
+--Body--
+r.body: 

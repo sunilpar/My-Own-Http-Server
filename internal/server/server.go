@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"httpfromtcp/internal/request"
+	"httpfromtcp/internal/response"
 	"log"
 	"net"
 	"sync/atomic"
@@ -48,30 +49,44 @@ func (s *Server) listen() {
 
 func (s *Server) handle(conn net.Conn) {
 	defer conn.Close()
-	//req parse here
-	_, err := request.RequestFromReader(bufio.NewReader(conn))
+
+	r, err := request.RequestFromReader(bufio.NewReader(conn))
 	if err != nil {
 		log.Printf("Malformed request: %v\n", err)
 		return
 	}
-	// fmt.Printf("\n--request line--\n")
-	// fmt.Printf("method: %v\n", r.RequestLine.Method)
-	// fmt.Printf("requestTarget: %v\n", r.RequestLine.RequestTarget)
-	// fmt.Printf("httpversion: %v\n", r.RequestLine.HttpVersion)
-	// fmt.Printf("\n--headers--\n")
-	// for i, v := range r.Headers {
-	// 	fmt.Printf("[%v]: %v\n", i, v)
-	// }
-	// fmt.Printf("\n--Body--\n")
-	// fmt.Printf("r.body: %v\n", string(r.Body))
+	fmt.Printf("\n--request line--\n")
+	fmt.Printf("method: %v\n", r.RequestLine.Method)
+	fmt.Printf("requestTarget: %v\n", r.RequestLine.RequestTarget)
+	fmt.Printf("httpversion: %v\n", r.RequestLine.HttpVersion)
+	fmt.Printf("\n--headers--\n")
+	for i, v := range r.Headers {
+		fmt.Printf("[%v]: %v\n", i, v)
+	}
+	fmt.Printf("\n--Body--\n")
+	fmt.Printf("r.body: %v\n\n\n", string(r.Body))
 
-	resp := "HTTP/1.1 200 OK\r\n" +
-		"Content-Type: text/plain\r\n" +
-		"Content-Length: 11\r\n" +
-		"\r\n" +
-		"sunil World!"
-	_, err = conn.Write([]byte(resp))
-	if err != nil {
-		log.Printf("Error writing response: %v\n", err)
+	const body = "sunil World!"
+	contentLen := len(body)
+
+	if err := response.WriteStatusLine(conn, response.StatusOK); err != nil {
+		log.Printf("Failed to write status line: %v\n", err)
+		return
+	}
+
+	h := response.GetDefaultHeaders(contentLen)
+	if err := response.WriteHeaders(conn, h); err != nil {
+		log.Printf("Failed to write headers: %v\n", err)
+		return
+	}
+
+	if _, err := conn.Write([]byte("\r\n")); err != nil {
+		log.Printf("Failed to write CRLF after headers: %v\n", err)
+		return
+	}
+	fmt.Printf("%v\n", body)
+
+	if _, err := conn.Write([]byte(body)); err != nil {
+		log.Printf("Failed to write body: %v\n", err)
 	}
 }
