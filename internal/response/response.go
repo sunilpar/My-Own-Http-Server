@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"httpfromtcp/internal/headers"
 	"io"
+	"strings"
 )
 
 type StatusCode int

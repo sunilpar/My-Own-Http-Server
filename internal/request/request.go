@@ -170,10 +170,11 @@ func (r *Request) parseSingle(data []byte, eof bool) (int, error) {
 				return 0, fmt.Errorf("body larger than Content-Length")
 			}
 			if len(r.Body) == r.bodyLength {
+				fmt.Printf("-------eof-------\n")
 				r.state = stateDone
 			}
 		} else if eof {
-			// No content-length and EOF reached
+			fmt.Printf("!!!!-eof-!!!!!\n")
 			r.state = stateDone
 		}
 		return len(data), nil
