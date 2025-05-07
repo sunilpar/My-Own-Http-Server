@@ -51,24 +51,24 @@ func (s *Server) listen() {
 func (s *Server) handle(conn net.Conn) {
 	defer conn.Close()
 
-	r, err := request.RequestFromReader(bufio.NewReader(conn))
+	_, err := request.RequestFromReader(bufio.NewReader(conn))
 	if err != nil {
 		log.Printf("Malformed request: %v\n", err)
 		return
 	}
-	fmt.Printf("\n--request line--\n")
-	fmt.Printf("method: %v\n", r.RequestLine.Method)
-	fmt.Printf("requestTarget: %v\n", r.RequestLine.RequestTarget)
-	fmt.Printf("httpversion: %v\n", r.RequestLine.HttpVersion)
-	fmt.Printf("\n--headers--\n")
-	for i, v := range r.Headers {
-		fmt.Printf("[%v]: %v\n", i, v)
-	}
-	fmt.Printf("\n--Body--\n")
-	fmt.Printf("r.body: %v\n\n\n", string(r.Body))
+	// fmt.Printf("\n--request line--\n")
+	// fmt.Printf("method: %v\n", r.RequestLine.Method)
+	// fmt.Printf("requestTarget: %v\n", r.RequestLine.RequestTarget)
+	// fmt.Printf("httpversion: %v\n", r.RequestLine.HttpVersion)
+	// fmt.Printf("\n--headers--\n")
+	// for i, v := range r.Headers {
+	// 	fmt.Printf("[%v]: %v\n", i, v)
+	// }
+	// fmt.Printf("\n--Body--\n")
+	// fmt.Printf("r.body: %v\n\n\n", string(r.Body))
 
 	const body = "sunil World!"
-	contentLen := len(body)
+	contentLen := len(body) + 2
 
 	if err := response.WriteStatusLine(conn, response.StatusOK); err != nil {
 		log.Printf("Failed to write status line: %v\n", err)

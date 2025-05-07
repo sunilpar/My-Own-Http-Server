@@ -27,8 +27,6 @@ func WriteStatusLine(w io.Writer, statusCode StatusCode) error {
 		reason = ""
 	}
 	_, err := fmt.Fprintf(w, "HTTP/1.1 %d %s\r\n", statusCode, reason)
-	wf := fmt.Sprintf("HTTP/1.1 %d %s\r\n", statusCode, reason)
-	_, err = w.Write([]byte(wf))
 	fmt.Printf("HTTP/1.1 %d %s\r\n", statusCode, reason)
 	return err
 }

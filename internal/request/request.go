@@ -117,7 +117,7 @@ func (r *Request) parse(data []byte, eof bool) (int, error) {
 	totalParsed := 0
 	for r.state != stateDone {
 		n, err := r.parseSingle(data[totalParsed:], eof)
-		fmt.Printf("buff:%v eof:%v\n", string(data[totalParsed:]), eof)
+		// fmt.Printf("buff:%v eof:%v\n", string(data[totalParsed:]), eof)
 		if err != nil {
 			return totalParsed, err
 		}
@@ -159,7 +159,12 @@ func (r *Request) parseSingle(data []byte, eof bool) (int, error) {
 					r.state = stateParsingBody
 				}
 			} else {
-				r.state = stateParsingBody
+				//change when we know more about eof and keep alive requirements
+				if r.RequestLine.Method == "GET" {
+					r.state = stateDone
+				} else {
+					r.state = stateParsingBody
+				}
 			}
 		}
 		return n, nil

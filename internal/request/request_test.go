@@ -87,7 +87,7 @@ func TestBodyFromReader(t *testing.T) {
 	t.Run("No Content-Length but Body Exists", func(t *testing.T) {
 		reader := &chunkReader{
 			data: "POST /submit HTTP/1.1\r\n" +
-				"Host: localhost\r\n" +
+				" Host: localhost\r\n" +
 				"\r\n" +
 				"extra body here",
 			numBytesPerRead: 4,
