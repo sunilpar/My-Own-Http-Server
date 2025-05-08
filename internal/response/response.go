@@ -35,6 +35,7 @@ const (
 	stateStatusWritten
 	stateHeadersWritten
 	stateBodyWritten
+	stateTrailersWritten
 )
 
 type Writer struct {
@@ -113,5 +114,23 @@ func (w *Writer) WriteChunkedBodyDone() (int, error) {
 	if w.state != stateBodyWritten {
 		return 0, errors.New("no chunked body started")
 	}
-	return fmt.Fprint(w.conn, "0\r\n\r\n")
+	w.state = stateTrailersWritten
+	return fmt.Fprint(w.conn, "0\r\n")
+}
+
+func (w *Writer) WriteTrailers(h headers.Headers) error {
+	if w.state != stateTrailersWritten {
+		return errors.New("must write chunked body done before trailers")
+	}
+	for key, val := range h {
+		_, err := fmt.Fprintf(w.conn, "%s: %s\r\n", key, val)
+		if err != nil {
+			return err
+		}
+	}
+	_, err := fmt.Fprint(w.conn, "\r\n")
+	if err == nil {
+		w.state = stateBodyWritten
+	}
+	return err
 }

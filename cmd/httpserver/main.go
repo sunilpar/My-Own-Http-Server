@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"httpfromtcp/internal/headers"
 	"httpfromtcp/internal/request"
 	"httpfromtcp/internal/response"
 	"httpfromtcp/internal/server"
@@ -98,17 +101,23 @@ func proxyToHttpbin(w *response.Writer, req *request.Request, path string) {
 	defer resp.Body.Close()
 
 	w.WriteStatusLine(response.StatusOK)
+
 	w.Header.Set("Content-Type", resp.Header.Get("Content-Type"))
 	w.Header.Del("Content-Length")
 	w.Header.Set("Transfer-Encoding", "chunked")
+	w.Header.Set("Trailer", "X-Content-SHA256, X-Content-Length")
 	w.WriteHeaders(w.Header)
 
+	var fullBody []byte
 	buf := make([]byte, 1024)
+
 	for {
 		n, err := resp.Body.Read(buf)
 		if n > 0 {
-			_, writeErr := w.WriteChunkedBody(buf[:n])
-			if writeErr != nil {
+			chunk := buf[:n]
+			fullBody = append(fullBody, chunk...)
+
+			if _, writeErr := w.WriteChunkedBody(chunk); writeErr != nil {
 				log.Println("Error writing chunk:", writeErr)
 				break
 			}
@@ -121,5 +130,17 @@ func proxyToHttpbin(w *response.Writer, req *request.Request, path string) {
 			break
 		}
 	}
+
 	w.WriteChunkedBodyDone()
+
+	sum := sha256.Sum256(fullBody)
+	hash := hex.EncodeToString(sum[:])
+	length := fmt.Sprintf("%d", len(fullBody))
+
+	trailer := headers.NewHeaders()
+	trailer.Set("X-Content-SHA256", hash)
+	trailer.Set("X-Content-Length", length)
+	if err := w.WriteTrailers(trailer); err != nil {
+		log.Println("Error writing trailers:", err)
+	}
 }
