@@ -5,9 +5,12 @@ import (
 	"httpfromtcp/internal/request"
 	"httpfromtcp/internal/response"
 	"httpfromtcp/internal/server"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 )
 
@@ -28,10 +31,17 @@ func main() {
 }
 
 func myHandler(w *response.Writer, req *request.Request) {
+	path := req.RequestLine.RequestTarget
+
+	if strings.HasPrefix(path, "/httpbin/") {
+		proxyToHttpbin(w, req, path)
+		return
+	}
+
 	var status response.StatusCode
 	var body string
 
-	switch req.RequestLine.RequestTarget {
+	switch path {
 	case "/yourproblem":
 		status = response.StatusBadRequest
 		body = `
@@ -69,4 +79,47 @@ func myHandler(w *response.Writer, req *request.Request) {
 	w.Header.Set("Content-Length", fmt.Sprintf("%d", len(body)))
 	w.WriteHeaders(w.Header)
 	w.WriteBody([]byte(body))
+}
+
+func proxyToHttpbin(w *response.Writer, req *request.Request, path string) {
+	targetPath := strings.TrimPrefix(path, "/httpbin")
+	url := "https://httpbin.org" + targetPath
+
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Printf("Error proxying request: %v", err)
+		w.WriteStatusLine(response.StatusInternalServerError)
+		w.Header.Set("Content-Type", "text/plain")
+		w.Header.Set("Content-Length", "21")
+		w.WriteHeaders(w.Header)
+		w.WriteBody([]byte("Proxying failed, sorry."))
+		return
+	}
+	defer resp.Body.Close()
+
+	w.WriteStatusLine(response.StatusOK)
+	w.Header.Set("Content-Type", resp.Header.Get("Content-Type"))
+	w.Header.Del("Content-Length")
+	w.Header.Set("Transfer-Encoding", "chunked")
+	w.WriteHeaders(w.Header)
+
+	buf := make([]byte, 1024)
+	for {
+		n, err := resp.Body.Read(buf)
+		if n > 0 {
+			_, writeErr := w.WriteChunkedBody(buf[:n])
+			if writeErr != nil {
+				log.Println("Error writing chunk:", writeErr)
+				break
+			}
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Println("Error reading response:", err)
+			break
+		}
+	}
+	w.WriteChunkedBodyDone()
 }

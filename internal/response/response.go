@@ -86,3 +86,32 @@ func (w *Writer) WriteBody(p []byte) (int, error) {
 	w.state = stateBodyWritten
 	return w.conn.Write(p)
 }
+
+func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
+	if w.state != stateHeadersWritten && w.state != stateBodyWritten {
+		return 0, errors.New("must write headers before chunked body")
+	}
+	w.state = stateBodyWritten
+
+	chunkSize := len(p)
+	_, err := fmt.Fprintf(w.conn, "%x\r\n", chunkSize)
+	if err != nil {
+		return 0, err
+	}
+	n, err := w.conn.Write(p)
+	if err != nil {
+		return n, err
+	}
+	_, err = fmt.Fprint(w.conn, "\r\n")
+	if err != nil {
+		return n, err
+	}
+	return n, nil
+}
+
+func (w *Writer) WriteChunkedBodyDone() (int, error) {
+	if w.state != stateBodyWritten {
+		return 0, errors.New("no chunked body started")
+	}
+	return fmt.Fprint(w.conn, "0\r\n\r\n")
+}

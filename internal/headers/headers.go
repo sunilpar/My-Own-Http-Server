@@ -69,5 +69,12 @@ func (h Headers) Set(key, value string) {
 	normalizedKey := strings.ToLower(strings.TrimSpace(key))
 	h[normalizedKey] = strings.TrimSpace(value)
 }
+func (h Headers) Del(key string) {
+	if h == nil {
+		return
+	}
+	normalizedKey := strings.ToLower(strings.TrimSpace(key))
+	delete(h, normalizedKey)
+}
 
 //go test -v ./internal/headers
