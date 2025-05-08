@@ -41,6 +41,11 @@ func myHandler(w *response.Writer, req *request.Request) {
 		return
 	}
 
+	if path == "/video" {
+		serveVideo(w)
+		return
+	}
+
 	var status response.StatusCode
 	var body string
 
@@ -143,4 +148,24 @@ func proxyToHttpbin(w *response.Writer, req *request.Request, path string) {
 	if err := w.WriteTrailers(trailer); err != nil {
 		log.Println("Error writing trailers:", err)
 	}
+}
+
+func serveVideo(w *response.Writer) {
+	data, err := os.ReadFile("assets/vim.mp4")
+	if err != nil {
+		log.Printf("Error reading video file: %v", err)
+		w.WriteStatusLine(response.StatusInternalServerError)
+		w.Header.Set("Content-Type", "text/plain")
+		body := "Video not found"
+		w.Header.Set("Content-Length", fmt.Sprintf("%d", len(body)))
+		w.WriteHeaders(w.Header)
+		w.WriteBody([]byte(body))
+		return
+	}
+
+	w.WriteStatusLine(response.StatusOK)
+	w.Header.Set("Content-Type", "video/mp4")
+	w.Header.Set("Content-Length", fmt.Sprintf("%d", len(data)))
+	w.WriteHeaders(w.Header)
+	w.WriteBody(data)
 }
