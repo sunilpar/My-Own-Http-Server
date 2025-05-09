@@ -4,10 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"httpfromtcp/internal/headers"
-	"httpfromtcp/internal/request"
-	"httpfromtcp/internal/response"
-	"httpfromtcp/internal/server"
 	"io"
 	"log"
 	"net/http"
@@ -15,6 +11,11 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/sunilpar/My-Own-Http-Server/internal/headers"
+	"github.com/sunilpar/My-Own-Http-Server/internal/request"
+	"github.com/sunilpar/My-Own-Http-Server/internal/response"
+	"github.com/sunilpar/My-Own-Http-Server/internal/server"
 )
 
 const port = 42069

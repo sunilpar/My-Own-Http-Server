@@ -3,8 +3,9 @@ package response
 import (
 	"errors"
 	"fmt"
-	"httpfromtcp/internal/headers"
 	"net"
+
+	"github.com/sunilpar/My-Own-Http-Server/internal/headers"
 )
 
 type StatusCode int

@@ -3,11 +3,12 @@ package server
 import (
 	"bufio"
 	"fmt"
-	"httpfromtcp/internal/request"
-	"httpfromtcp/internal/response"
 	"log"
 	"net"
 	"sync/atomic"
+
+	"github.com/sunilpar/My-Own-Http-Server/internal/request"
+	"github.com/sunilpar/My-Own-Http-Server/internal/response"
 )
 
 type Handler func(w *response.Writer, req *request.Request)

@@ -2,11 +2,12 @@ package request
 
 import (
 	"fmt"
-	"httpfromtcp/internal/headers"
 	"io"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/sunilpar/My-Own-Http-Server/internal/headers"
 )
 
 type parserState int
