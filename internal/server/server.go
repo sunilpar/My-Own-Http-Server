@@ -61,15 +61,8 @@ func (s *Server) handle(conn net.Conn) {
 		log.Printf("Malformed request: %v\n", err)
 		w := response.NewWriter(conn)
 		w.WriteStatusLine(response.StatusBadRequest)
-		w.Header.Set("Content-Type", "text/html")
-		body := []byte(`
-			<html>
-			  <head><title>400 Bad Request</title></head>
-			  <body>
-				<h1>Bad Request</h1>
-				<p>Your request honestly kinda sucked.</p>
-			  </body>
-			</html>`)
+		w.Header.Set("Content-Type", "text/plain")
+		body := []byte("Bad Request")
 		w.Header.Set("Content-Length", fmt.Sprintf("%d", len(body)+2))
 		w.WriteHeaders(w.Header)
 		w.WriteBody(body)
